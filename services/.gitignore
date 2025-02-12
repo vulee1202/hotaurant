@@ -1,0 +1,12 @@
+node_modules/
+logs/tx/debug.log
+logs/tx/error.log
+logs/tx/info.log
+logs/tx/warn.log
+app.log
+
+logs/ELK/certs
+queue/RabbitMQ/certs
+cache/Redis/certs
+certs/certs
+certs/step-ca

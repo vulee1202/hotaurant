@@ -1,0 +1,52 @@
+# --- Basic Cluster Configuration ---
+# Set the cluster name and node name for easy identification in a multi-node setup
+cluster.name: "docker-cluster"  # Name of the Elasticsearch cluster
+node.name: "node-1"  # Name of this node
+path.data: /usr/share/elasticsearch/data  # Path to store data files
+path.logs: /usr/share/elasticsearch/logs  # Path to store log files
+# path.repo: ["/mnt/backup"]  # Path for snapshots (optional, configure if needed)
+
+# --- Network Configuration ---
+# Bind Elasticsearch to listen on all available network interfaces
+network.host: 0.0.0.0  # Listen on all network interfaces (accessible from any host)
+http.port: 9200  # HTTP port for communication with Elasticsearch (clients, Kibana, etc.)
+
+# --- Discovery Configuration ---
+# Use single-node discovery in a non-clustered setup (for a single node only)
+discovery.type: single-node  # Discovery type set to single-node
+# For multi-node clusters, use:
+# discovery.seed_hosts: ["node-1-ip", "node-2-ip"]
+# cluster.initial_master_nodes: ["node-1", "node-2"]
+
+# --- Security Configuration ---
+# Enable built-in security features in Elasticsearch
+xpack.security.enabled: true  # Enable security (authentication & authorization)
+
+# --- Enable SSL for transport (node-to-node communication) ---
+# Use SSL for secure communication between nodes (important for multi-node clusters)
+xpack.security.transport.ssl.enabled: true
+xpack.security.transport.ssl.verification_mode: certificate  # Verify certificates for node-to-node communication
+xpack.security.transport.ssl.keystore.path: /usr/share/elasticsearch/config/ssl-transport/elastic-certificates.p12  # Path to the keystore containing certificates
+xpack.security.transport.ssl.keystore.password: abc@123  # Password for the keystore
+xpack.security.transport.ssl.truststore.path: /usr/share/elasticsearch/config/ssl-transport/elastic-certificates.p12  # Path to the truststore
+xpack.security.transport.ssl.truststore.password: abc@123  # Password for the truststore
+
+# --- Enable SSL for HTTP (client communication) ---
+# Use SSL for secure HTTP communication with clients (e.g., Kibana)
+xpack.security.http.ssl.enabled: true
+xpack.security.http.ssl.keystore.path: /usr/share/elasticsearch/config/ssl-http/http.p12  # Path to the keystore for HTTP SSL
+xpack.security.http.ssl.keystore.password: abc@123  # Password for the keystore
+xpack.security.http.ssl.truststore.path: /usr/share/elasticsearch/config/ssl-http/http.p12  # Path to the truststore for HTTP SSL
+xpack.security.http.ssl.truststore.password: abc@123  # Password for the truststore
+
+# Log SSL debug information for troubleshooting (optional)
+logger.org.elasticsearch.xpack.security.transport.ssl: DEBUG
+logger.org.elasticsearch.xpack.security.http.ssl: DEBUG
+
+# --- Performance Optimizations ---
+# Increase memory buffer for indexing operations for better indexing performance
+indices.memory.index_buffer_size: 10%  # Allocate 10% of the heap for index buffering
+
+# Adjust the write thread pool's queue size (useful for systems with high write loads)
+thread_pool.write.queue_size: 200  # Set the write queue size (increase based on expected load)
+

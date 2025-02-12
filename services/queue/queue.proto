@@ -1,0 +1,29 @@
+import "google/protobuf/any.proto";
+
+syntax = "proto3";
+
+package queue;
+
+service Queuer {
+    rpc send (SendRequest) returns (SendResponse);
+    rpc receive (ReceiveRequest) returns (ReceiveResponse);
+}
+
+message SendRequest {
+    string queue = 1;
+    string message = 2;
+}
+
+message SendResponse {
+    string message = 1;
+}
+
+message ReceiveRequest {
+    string queue = 1;
+    string message = 2;
+}
+
+message ReceiveResponse {
+    string message = 1;
+}
+

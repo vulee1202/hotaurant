@@ -1,0 +1,40 @@
+services:
+    step-ca:
+        image: smallstep/step-ca:latest
+        container_name: step-ca
+        ports:
+            - "9000:9000"
+        environment:
+            - DOCKER_STEPCA_INIT_NAME=MyInternalCA
+            - DOCKER_STEPCA_INIT_DNS_NAMES=localhost,127.0.0.1,step-ca
+            - DOCKER_STEPCA_INIT_ADDRESS=:9000
+            - DOCKER_STEPCA_INIT_PASSWORD_FILE=/run/secrets/ca_password
+        secrets:
+            - ca_password
+        volumes:
+            - ./step-ca/:/home/step
+        restart: unless-stopped
+
+    step-ca-setup:
+        image: alpine:3.16
+        container_name: step-ca-setup
+        depends_on:
+            - step-ca
+        entrypoint: ["/scripts/entrypoint.sh"]
+        environment:
+            - FILEBEAT_PASSWORD=${FILEBEAT_PASSWORD}
+            - LOGSTASH_PASSWORD=${LOGSTASH_PASSWORD}
+        volumes:
+            - ./scripts:/scripts
+            - ./step-ca/certs/root_ca.crt:/certs/root_ca.crt:ro
+            - ./filebeat/certs:/home/step/certs:ro
+        networks:
+            - step-ca-network
+
+networks:
+    step-ca-network:
+        driver: bridge
+
+secrets:
+    ca_password:
+        file: ./ca_password.txt

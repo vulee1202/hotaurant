@@ -1,0 +1,215 @@
+services:
+    elasticsearch:
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.10.1
+        container_name: elasticsearch
+        environment:
+            - ES_JAVA_OPTS=-Xms512m -Xmx512m
+            - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+        volumes:
+            - elasticsearch:/usr/share/elasticsearch/data
+            - ./ELK/certs/elasticsearch-ssl-transport:/usr/share/elasticsearch/config/ssl-transport:ro
+            - ./ELK/certs/elasticsearch-ssl-http/elasticsearch:/usr/share/elasticsearch/config/ssl-http:ro
+            - ./ELK/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+        ports:
+            - "9200:9200"
+            - "9300:9300"
+        restart: unless-stopped
+        networks:
+            my-network:
+                aliases:
+                    - elasticsearch
+        ulimits:
+            memlock:
+                soft: -1
+                hard: -1
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "curl",
+                    "-k",
+                    "-u",
+                    "${ELASTIC_USERNAME}:${ELASTIC_PASSWORD}",
+                    "--cacert",
+                    "/usr/share/elasticsearch/config/certs/ca.crt",
+                    "https://localhost:9200/_cluster/health?wait_for_status=yellow",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 60s
+
+    # kibana_elastic_setup:
+    #     image: alpine:3.16
+    #     container_name: kibana_elastic_setup
+    #     depends_on:
+    #         elasticsearch:
+    #             condition: service_healthy
+    #     entrypoint: |
+    #         /bin/sh -c "
+    #         apk add --no-cache curl jq &&
+    #         chmod +x /scripts/kibana.setup.sh &&
+    #         /scripts/kibana.setup.sh"
+    #     environment:
+    #         - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+    #         - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    #         - KIBANA_USERNAME=${KIBANA_USERNAME}
+    #         - KIBANA_PASSWORD=${KIBANA_PASSWORD}
+    #         - KIBANA_FULL_NAME=${KIBANA_FULL_NAME}
+    #         - KIBANA_EMAIL=${KIBANA_EMAIL}
+    #     volumes:
+    #         - ./ELK/scripts:/scripts
+    #         - ./ELK/certs/elasticsearch-ssl-http/kibana:/certs:ro
+    #     networks:
+    #         - my-network
+
+    # kibana_admin_setup:
+    #     image: alpine:3.16
+    #     container_name: kibana_admin_setup
+    #     depends_on:
+    #         elasticsearch:
+    #             condition: service_healthy
+    #     entrypoint: |
+    #         /bin/sh -c "
+    #         apk add --no-cache curl jq &&
+    #         chmod +x /scripts/kibana.admin.setup.sh &&
+    #         /scripts/kibana.admin.setup.sh"
+    #     environment:
+    #         - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+    #         - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    #         - KIBANA_ADMIN_USERNAME=${KIBANA_ADMIN_USERNAME}
+    #         - KIBANA_ADMIN_PASSWORD=${KIBANA_ADMIN_PASSWORD}
+    #         - KIBANA_ADMIN_FULL_NAME=${KIBANA_ADMIN_FULL_NAME}
+    #         - KIBANA_ADMIN_EMAIL=${KIBANA_ADMIN_EMAIL}
+    #     volumes:
+    #         - ./ELK/scripts:/scripts
+    #         - ./ELK/certs/elasticsearch-ssl-http/kibana:/certs:ro
+    #     networks:
+    #         - my-network
+
+    # logstash_elastic_setup:
+    #     image: alpine:3.16
+    #     container_name: logstash_elastic_setup
+    #     depends_on:
+    #         elasticsearch:
+    #             condition: service_healthy
+    #     entrypoint: |
+    #         /bin/sh -c "
+    #         apk add --no-cache curl jq &&
+    #         chmod +x /scripts/logstash.setup.sh &&
+    #         /scripts/logstash.setup.sh"
+    #     environment:
+    #         - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+    #         - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    #         - LOGSTASH_USERNAME=${LOGSTASH_USERNAME}
+    #         - LOGSTASH_PASSWORD=${LOGSTASH_PASSWORD}
+    #         - LOGSTASH_FULL_NAME=${LOGSTASH_FULL_NAME}
+    #         - LOGSTASH_EMAIL=${LOGSTASH_EMAIL}
+    #     volumes:
+    #         - ./ELK/scripts:/scripts
+    #         - ./ELK/certs/elasticsearch-ssl-http/kibana:/certs:ro
+    #     networks:
+    #         - my-network
+
+    startup:
+        image: alpine:3.16
+        container_name: startup
+        depends_on:
+            elasticsearch:
+                condition: service_healthy
+        entrypoint: ["/scripts/entrypoint.sh"]
+        environment:
+            - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+            - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+
+            - KIBANA_ADMIN_USERNAME=${KIBANA_ADMIN_USERNAME}
+            - KIBANA_ADMIN_PASSWORD=${KIBANA_ADMIN_PASSWORD}
+            - KIBANA_ADMIN_FULL_NAME=${KIBANA_ADMIN_FULL_NAME}
+            - KIBANA_ADMIN_EMAIL=${KIBANA_ADMIN_EMAIL}
+
+            - KIBANA_USERNAME=${KIBANA_USERNAME}
+            - KIBANA_PASSWORD=${KIBANA_PASSWORD}
+            - KIBANA_FULL_NAME=${KIBANA_FULL_NAME}
+            - KIBANA_EMAIL=${KIBANA_EMAIL}
+
+            - LOGSTASH_USERNAME=${LOGSTASH_USERNAME}
+            - LOGSTASH_PASSWORD=${LOGSTASH_PASSWORD}
+            - LOGSTASH_FULL_NAME=${LOGSTASH_FULL_NAME}
+            - LOGSTASH_EMAIL=${LOGSTASH_EMAIL}
+        volumes:
+            - ./ELK/scripts:/scripts
+            - ./ELK/certs/elasticsearch-ssl-http/kibana:/certs:ro
+        networks:
+            - my-network
+
+    logstash:
+        image: docker.elastic.co/logstash/logstash:8.10.1
+        container_name: logstash
+        environment:
+            - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOST}
+            - LOGSTASH_USERNAME=${LOGSTASH_USERNAME}
+            - LOGSTASH_PASSWORD=${LOGSTASH_PASSWORD}
+        depends_on:
+            startup:
+                condition: service_completed_successfully
+            # logstash_elastic_setup:
+            #     condition: service_completed_successfully
+        volumes:
+            - ./ELK/certs/elasticsearch-ssl-transport:/usr/share/logstash/config/ssl-transport:ro
+            - ./ELK/certs/elasticsearch-ssl-http/kibana:/usr/share/logstash/config/ssl-http:ro
+            - ./ELK/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+            - ./ELK/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+        ports:
+            - "5044:5044"
+        restart: unless-stopped
+        networks:
+            - my-network
+
+    kibana:
+        image: docker.elastic.co/kibana/kibana:8.10.1
+        container_name: kibana
+        environment:
+            - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOST}
+            - KIBANA_USERNAME=${KIBANA_USERNAME}
+            - KIBANA_PASSWORD=${KIBANA_PASSWORD}
+            - ENCRYPT_SAVE_OBJECT_KEY=${ENCRYPT_SAVE_OBJECT_KEY}
+            - ENCRYPT_REPORTING_KEY=${ENCRYPT_REPORTING_KEY}
+            - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+            - PUBLIC_BASE_URL=${PUBLIC_BASE_URL}
+        depends_on:
+            startup:
+                condition: service_completed_successfully
+            # kibana_elastic_setup:
+            #     condition: service_completed_successfully
+            # kibana_admin_setup:
+            #     condition: service_completed_successfully
+        volumes:
+            - ./ELK/certs/elasticsearch-ssl-transport:/usr/share/kibana/config/ssl-transport:ro
+            - ./ELK/certs/elasticsearch-ssl-http/kibana:/usr/share/kibana/config/ssl-http:ro
+            - ./ELK/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+        ports:
+            - "5601:5601"
+        restart: unless-stopped
+        networks:
+            - my-network
+
+    filebeat:
+        image: docker.elastic.co/beats/filebeat:8.10.1
+        container_name: filebeat
+        user: root
+        volumes:
+            - ./ELK/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+            - ./tx:/var/log/apps:ro
+            - ./ELK/certs/elasticsearch-ssl-transport:/usr/share/filebeat/config/ssl-transport:ro
+        networks:
+            - my-network
+        depends_on:
+            - logstash
+
+networks:
+    my-network:
+        driver: bridge
+
+volumes:
+    elasticsearch:
+        driver: local

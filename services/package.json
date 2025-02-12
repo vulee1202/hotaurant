@@ -1,0 +1,24 @@
+{
+  "name": "nodejs",
+  "version": "1.0.0",
+  "description": "Services",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --env-file=.env.production main.js"
+  },
+  "author": "VuLee",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.12.5",
+    "@grpc/proto-loader": "^0.7.13",
+    "amqplib": "^0.10.5",
+    "dotenv": "^16.4.7",
+    "google-protobuf": "^3.21.4",
+    "path": "^0.12.7",
+    "redis": "^4.7.0",
+    "tls": "^0.0.1",
+    "winston-logstash": "^1.2.1"
+  }
+}

@@ -1,0 +1,12 @@
+{
+    "address": ":443",
+    "dnsNames": ["localhost", "step-ca"],
+    "db": {
+        "type": "badger",
+        "dataSource": "/home/step/db"
+    },
+    "tls": {
+        "key": "/home/step/secrets/ca.key",
+        "cert": "/home/step/secrets/ca.crt"
+    }
+}

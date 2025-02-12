@@ -1,0 +1,73 @@
+# --- Basic Server Configuration ---
+server.host: 0.0.0.0
+server.port: 5601
+server.publicBaseUrl: "${PUBLIC_BASE_URL}"
+
+# --- SSL Configuration (Highly Recommended) ---
+# Enable SSL to secure communication
+server.ssl.enabled: true
+server.ssl.certificate: /usr/share/kibana/config/ssl-transport/fullchain.server.crt
+server.ssl.key: /usr/share/kibana/config/ssl-transport/server.key
+
+# --- Elasticsearch Connection Configuration ---
+elasticsearch.hosts: ["${ELASTICSEARCH_HOSTS}"]
+elasticsearch.username: "${KIBANA_USERNAME}"
+elasticsearch.password: "${KIBANA_PASSWORD}"
+
+# SSL settings for secure communication with Elasticsearch
+elasticsearch.ssl.verificationMode: certificate
+elasticsearch.ssl.certificateAuthorities: ["/usr/share/kibana/config/ssl-http/elasticsearch-ca.pem"]
+
+# Retry and Connection Pool Settings
+elasticsearch.requestTimeout: 30000  # 30 seconds (adjust based on your use case)
+elasticsearch.pingTimeout: 1500      # 1.5 seconds
+elasticsearch.sniffOnStart: false    # Disable sniffing unless using multiple nodes with dynamic IPs
+
+# --- Security Settings ---
+xpack.security.enabled: true
+xpack.security.session.idleTimeout: "30m"  # Auto logout users after 30 minutes of inactivity
+xpack.security.session.lifespan: "8h"     # Session expires after 8 hours
+xpack.encryptedSavedObjects.encryptionKey: "${ENCRYPT_SAVE_OBJECT_KEY}" # Use a secure 32-char key
+xpack.reporting.encryptionKey: "${ENCRYPT_REPORTING_KEY}"      # Use a secure 32-char key
+
+# --- Telemetry Settings ---
+telemetry.enabled: false
+telemetry.optIn: false
+
+# --- Monitoring and Logs ---
+logging:
+  root:
+    level: info  # Use "info" for production; set to "debug" only during troubleshooting
+  appenders:
+    file:
+      type: file
+      fileName: /var/log/kibana/kibana.log
+      layout:
+        type: json
+  loggers:
+    - name: plugins.alerting
+      level: warn
+    - name: elasticsearch
+      level: warn
+
+# Enable audit logs if security monitoring is required
+xpack.security.audit.enabled: true
+xpack.security.audit.appender:
+  type: file
+  fileName: /var/log/kibana/audit.log
+  layout:
+    type: json
+
+# --- Advanced Settings ---
+server.maxPayloadBytes: 10485760  # 10MB
+
+# --- UI Settings ---
+# Disable unnecessary features in production
+xpack.security.showInsecureClusterWarning: false
+xpack.reporting.roles.enabled: false
+
+# --- Cache Settings ---
+# Helps improve performance for heavy use cases
+xpack.task_manager.poll_interval: 3000        # Reduce polling frequency (default: 3000ms)
+xpack.task_manager.max_workers: 10            # Adjust based on available resources
+xpack.task_manager.monitored_stats_running_average_window: 50

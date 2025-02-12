@@ -1,0 +1,40 @@
+services:
+    redis:
+        image: redis:latest
+        container_name: redis
+        environment:
+            REDIS_PASS: ${REDIS_PASS}
+        volumes:
+            - redis:/data
+            - ./Redis/redis.conf:/etc/redis/redis.conf:ro
+            - ./Redis/certs:/etc/redis/ssl:ro
+        ports:
+            - "6379:6379"
+        restart: unless-stopped
+        networks:
+            - my-network
+        command: ["redis-server", "/etc/redis/redis.conf"]
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "redis-cli",
+                    "--tls",
+                    "--cert",
+                    "/etc/redis/ssl/fullchain.server.crt",
+                    "--key",
+                    "/etc/redis/ssl/server.key",
+                    "--cacert",
+                    "/etc/redis/ssl/ca.crt",
+                    "ping",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+
+networks:
+    my-network:
+        driver: bridge
+
+volumes:
+    redis:

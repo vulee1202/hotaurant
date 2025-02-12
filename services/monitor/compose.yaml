@@ -1,0 +1,30 @@
+services:
+    chrony:
+        image: cturra/ntp:latest
+        container_name: chrony
+        entrypoint:
+            ["/bin/sh", "-c", "rm -f /var/run/chrony/chronyd.pid && /usr/sbin/chronyd -d -f /etc/chrony/chrony.conf"]
+        privileged: true
+        user: root
+        cap_add:
+            - SYS_TIME
+        ports:
+            - "123:123/udp"
+        volumes:
+            - ./chrony/chrony-data:/var/lib/chrony
+            - ./chrony/chrony.conf:/etc/chrony/chrony.conf
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/hostname:/etc/hostname:ro
+        restart: unless-stopped
+        environment:
+            - TZ=Asia/Ho_Chi_Minh
+            - CHRONY_DEBUG=1
+        healthcheck:
+            test: ["CMD", "chronyc", "tracking"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 30s
+
+volumes:
+    chrony-data:

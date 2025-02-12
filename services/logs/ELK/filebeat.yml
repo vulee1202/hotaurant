@@ -1,0 +1,23 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/apps/*.log
+    fields:
+      environment: production
+
+output.logstash:
+  hosts: ["logstash:5044"]
+  ssl:
+    certificate: "/usr/share/filebeat/config/ssl-transport/fullchain.server.crt"
+    key: "/usr/share/filebeat/config/ssl-transport/server.key"
+    certificate_authorities: ["/usr/share/filebeat/config/ssl-transport/ca.crt"]
+
+logging:
+  level: info
+  to_files: true
+  files:
+    path: /var/log/filebeat
+    name: filebeat.log
+    keepfiles: 7
+    permissions: 0644

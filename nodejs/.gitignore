@@ -1,0 +1,6 @@
+node_modules/
+logs/info.log
+logs/warn.log
+logs/error.log
+logs/debug.log
+app.log

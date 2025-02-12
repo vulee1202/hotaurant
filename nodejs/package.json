@@ -1,0 +1,26 @@
+{
+  "name": "nodejs",
+  "version": "1.0.0",
+  "description": "Sub-Server",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "production": "node --env-file=.env.production main.js",
+    "development": "node --env-file=.env.development main.js"
+  },
+  "author": "VuLee",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.12.5",
+    "@grpc/proto-loader": "^0.7.13",
+    "amqplib": "^0.10.5",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "google-protobuf": "^3.21.4",
+    "ololog": "^1.1.175",
+    "os": "^0.1.2",
+    "redis": "^4.7.0"
+  }
+}
